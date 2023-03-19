@@ -2,6 +2,7 @@ from django.core.paginator import Paginator
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import get_user_model
+from django.views.generic import ListView
 from .models import Post, Group
 from .forms import PostForm
 
@@ -60,31 +61,43 @@ def post_detail(request, post_id):
 
 @login_required
 def post_create(request):
-    if request.method == 'POST':
-        form = PostForm(request.POST)
-        if form.is_valid():
-            post = form.save(commit=False)
-            post.author = request.user
-            post.save()
-            return redirect('posts:profile', username=request.user.username)
-    else:
-        form = PostForm()
-    return render(request, 'posts/create_post.html', {'form': form})
+    form = PostForm(request.POST or None)
+    if request.method != 'POST' or not form.is_valid():
+        return render(
+            request, 'posts/create_post.html', context={'form': form}
+        )
+    post = form.save(commit=False)
+    post.author = request.user
+    post.save()
+    return redirect('posts:profile', username=request.user.username)
 
 
+@login_required
 def post_edit(request, post_id):
     post = get_object_or_404(Post, id=post_id)
     if post.author != request.user:
         return redirect('posts:post_detail', post_id=post_id)
-    if request.method == 'POST':
-        form = PostForm(request.POST, instance=post)
-        if form.is_valid():
-            form.save()
-            return redirect('posts:post_detail', post_id=post_id)
-    else:
-        form = PostForm(instance=post)
+    form = PostForm(request.POST, instance=post)
+    if request.method == 'POST' and form.is_valid():
+        form.save()
+        return redirect('posts:post_detail', post_id=post_id)
     context = {
         'form': form,
         'is_edit': True,
     }
     return render(request, 'posts/create_post.html', context)
+
+
+class SearchResultsView(ListView):
+    model = Post
+    template_name = 'posts/search_results.html'
+
+    def get_queryset(self):
+        query = self.request.GET.get('query')
+        object_list = Post.objects.filter(text__icontains=query)
+        return object_list
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['query'] = self.request.GET.get('query', '')
+        return context

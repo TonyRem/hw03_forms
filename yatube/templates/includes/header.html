@@ -16,6 +16,13 @@
       {% with request.resolver_match.view_name as view_name %}
       <ul class="nav nav-pills">
         <li class="nav-item">
+          <form class="d-flex" action="{% url 'posts:search_results' %}" method="get">
+            {% csrf_token %}
+            <input class="form-control me-2" type="search" name="query" placeholder="Поиск" aria-label="Поиск">
+            <button class="btn btn-outline-light" type="submit">Найти</button>
+          </form>
+        </li>
+        <li class="nav-item">
           <a class="nav-link {% if view_name  == 'about:author' %}active{% endif %}"
           href="{% url 'about:author' %}">Об авторе</a>
         </li>

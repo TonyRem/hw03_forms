@@ -12,3 +12,7 @@ class PostForm(forms.ModelForm):
             'group': 'Группа, к которой будет относиться пост (необязательно)',
         }
         widgets = {'text': forms.Textarea(attrs={'rows': 3})}
+
+
+class SearchForm(forms.Form):
+    query = forms.CharField()
