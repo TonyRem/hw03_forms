@@ -77,7 +77,7 @@ def post_edit(request, post_id):
     post = get_object_or_404(Post, id=post_id)
     if post.author != request.user:
         return redirect('posts:post_detail', post_id=post_id)
-    form = PostForm(request.POST, instance=post)
+    form = PostForm(request.POST or None, instance=post)
     if request.method == 'POST' and form.is_valid():
         form.save()
         return redirect('posts:post_detail', post_id=post_id)
@@ -93,7 +93,7 @@ class SearchResultsView(ListView):
     template_name = 'posts/search_results.html'
 
     def get_queryset(self):
-        query = self.request.GET.get('query')
+        query = self.request.GET.get('query', '') 
         object_list = Post.objects.filter(text__icontains=query)
         return object_list
 
